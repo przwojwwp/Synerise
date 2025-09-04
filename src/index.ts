@@ -49,11 +49,19 @@ declare global {
   console.log("%cScan time:%c %d ms", yellow, "", Math.round(t1 - t0));
 
   const saved = upsertProduct(info, 1);
-  console.log(
-    "%c[MiniCart]%c saved to localStorage 'cart':",
-    yellow,
-    "",
-    saved
-  );
-  console.log("%c[MiniCart]%c current cart:", yellow, "", getCart());
+  if (saved) {
+    console.log(
+      "%c[MiniCart]%c saved to localStorage 'cart':",
+      yellow,
+      "",
+      saved
+    );
+    console.log("%c[MiniCart]%c current cart:", yellow, "", getCart());
+  } else {
+    console.log(
+      "%c[MiniCart]%c skipped — product incomplete (requires name, price, imageUrl, productUrl).",
+      yellow,
+      ""
+    );
+  }
 })();
