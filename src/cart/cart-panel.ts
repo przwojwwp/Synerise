@@ -25,6 +25,7 @@ const styleTag = (): HTMLStyleElement => {
   const style = document.createElement("style");
   style.textContent = `
     .panel {
+      position: relative;
       box-shadow: 0 6px 24px rgba(0,0,0,.2);
       border: 1px solid rgba(0,0,0,.12);
       border-radius: 10px;
@@ -43,6 +44,15 @@ const styleTag = (): HTMLStyleElement => {
     .title { font-weight: 700; }
     .close { border: 0; background: transparent; cursor: pointer; font-size: 18px; }
     .list { max-height: 280px; overflow: auto; }
+    .row {
+      display:grid; grid-template-columns: 1fr auto auto auto; gap: 8px;
+      align-items:center; padding: 8px 12px; border-bottom: 1px dashed rgba(0,0,0,.06);
+    }
+    .row:last-child { border-bottom: 0; }
+    .row .name { font-weight: 600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .row .qty { text-align:right; min-width: 2ch; }
+    .row .price, .row .total { text-align:right; white-space:nowrap; }
+    .row .remove { margin-left: 8px; cursor:pointer; border:0; background:transparent; color:#c00; }
     .footer {
       padding: 10px 12px; display:flex; justify-content:space-between; align-items:center;
       background: #fafafa; border-top: 1px solid rgba(0,0,0,.08);
@@ -148,13 +158,21 @@ const render = (shadowRoot: ShadowRoot) => {
     <div>${String(total)}</div>
   `;
 
-  shadowRoot.innerHTML = "";
-  shadowRoot.appendChild(styleTag());
+  header
+    .querySelector<HTMLButtonElement>(".close")!
+    .addEventListener("click", () => {
+      const el = shadowRoot.getElementById(PANEL_ID);
+      if (el) el.style.display = "none";
+    });
+
+  const root = shadowRoot;
+  root.innerHTML = "";
+  root.appendChild(styleTag());
   wrapper.appendChild(toggle);
   wrapper.appendChild(header);
   wrapper.appendChild(list);
   wrapper.appendChild(footer);
-  shadowRoot.appendChild(wrapper);
+  root.appendChild(wrapper);
 };
 
 export const initCartPanel = (): void => {
