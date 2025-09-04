@@ -1,5 +1,6 @@
 import { readLS, writeLS } from "../helpers/ls";
 import { getProductId } from "../helpers/product-id";
+import { isCompleteProduct } from "../helpers/product-validate";
 import {
   CART_LS_KEY,
   CART_VERSION,
@@ -35,7 +36,11 @@ export const saveCart = (state: CartState): boolean => {
   return writeLS(CART_LS_KEY, payload);
 };
 
-export const upsertProduct = (info: ProductInfo, qty = 1): CartItem => {
+export const upsertProduct = (info: ProductInfo, qty = 1): CartItem | null => {
+  if (!isCompleteProduct(info)) {
+    return null;
+  }
+
   const id = getProductId(info);
   const state = loadCart();
 
@@ -49,10 +54,10 @@ export const upsertProduct = (info: ProductInfo, qty = 1): CartItem => {
 
   const item: CartItem = {
     id,
-    name: info.name ?? null,
-    price: info.price ?? null,
-    imageUrl: info.imageUrl ?? null,
-    productUrl: info.productUrl ?? null,
+    name: info.name,
+    price: info.price,
+    imageUrl: info.imageUrl,
+    productUrl: info.productUrl,
     quantity: Math.max(1, qty),
     addedAt: nowIso(),
     updatedAt: nowIso(),
