@@ -73,6 +73,17 @@ export const upsertProduct = (info: ProductInfo, qty = 1): CartItem | null => {
   return item;
 };
 
+export const removeItem = (id: string): boolean => {
+  const state = loadCart();
+  const before = state.items.length;
+  state.items = state.items.filter((it) => it.id !== id);
+  if (state.items.length !== before) {
+    return saveCart(state);
+  }
+
+  return false;
+};
+
 export const getCart = (): CartState => {
   return loadCart();
 };
