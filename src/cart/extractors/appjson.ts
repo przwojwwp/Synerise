@@ -3,24 +3,14 @@ import {
   looksLikeJsonPayload,
   looksLikeLD,
 } from "../../helpers/mime";
-import {
-  MAX_CHARS,
-  scriptText,
-  scriptType,
-  allScripts,
-} from "../../helpers/scripts";
+import { scriptText, scriptType, allScripts } from "../../helpers/scripts";
 import { safeParseJsonOrFirstObject } from "../../helpers/json";
+import type { ExtractOptions } from "../../types/ExtractOptions";
 
-type ExtractOptions = {
-  fullScan?: boolean;
-  maxScripts?: number;
-  maxChars?: number;
-};
-
-export function extractNameFromAppJSON(
+export const extractNameFromAppJSON = (
   options: ExtractOptions = {}
-): string | null {
-  const { fullScan = false, maxScripts = 8, maxChars = MAX_CHARS } = options;
+): string | null => {
+  const { fullScan = true, maxScripts = 8, maxChars } = options;
 
   const scripts = allScripts();
 
@@ -143,4 +133,4 @@ export function extractNameFromAppJSON(
   }
 
   return null;
-}
+};

@@ -1,13 +1,7 @@
-import { isAnyJsonButLd, isLdType, looksLikeLD } from "../../helpers/mime";
-import { MAX_CHARS, scriptText, scriptType } from "../../helpers/scripts";
 import type { DataFormat } from "../../types/DataFormat";
-
-
-export type DetectOptions = {
-  maxScripts?: number;
-  maxChars?: number;
-  fullScan?: boolean;
-};
+import { isAnyJsonButLd, isLdType, looksLikeLD } from "../../helpers/mime";
+import { scriptText, scriptType } from "../../helpers/scripts";
+import type { DetectOptions } from "../../types/DetectOptions";
 
 export const detectFromScripts = (
   scripts: HTMLScriptElement[],
@@ -16,7 +10,7 @@ export const detectFromScripts = (
   let hasLD = false;
   let hasJSON = false;
 
-  const { maxScripts = 8, maxChars = MAX_CHARS, fullScan = false } = options;
+  const { maxScripts = 8, maxChars, fullScan = true } = options;
 
   let checked = 0;
   for (const s of scripts) {
@@ -25,11 +19,9 @@ export const detectFromScripts = (
     const type = scriptType(s).toLowerCase();
     const content = scriptText(s, maxChars);
 
-    // 1) MIME (pewniaki)
     if (isLdType(type)) hasLD = true;
     else if (isAnyJsonButLd(type)) hasJSON = true;
 
-    // 2) Heurystyki (fallback)
     if (content) {
       if (looksLikeLD(content) && /"Product"/i.test(content)) hasLD = true;
       if (
