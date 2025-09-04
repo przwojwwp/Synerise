@@ -1,21 +1,28 @@
+import { allScripts, scriptText, scriptType } from "../../helpers/scripts";
+import { safeParseJsonOrFirstObject } from "../../helpers/json";
 import {
   isAnyJsonButLd,
   looksLikeJsonPayload,
   looksLikeLD,
 } from "../../helpers/mime";
-import { scriptText, scriptType, allScripts } from "../../helpers/scripts";
-import { safeParseJsonOrFirstObject } from "../../helpers/json";
+import {
+  appPickImage,
+  appPickName,
+  appPickPrice,
+  appPickUrl,
+} from "../../helpers/json-pick";
+import { getCanonicalUrl } from "../../helpers/url";
+import type { ProductInfo } from "../../types/ProductInfo";
 import type { ExtractOptions } from "../../types/ExtractOptions";
 
-export const extractNameFromAppJSON = (
-  options: ExtractOptions = {}
-): string | null => {
-  const { fullScan = true, maxScripts = 8, maxChars } = options;
+export const extractInfoFromAppJSON = (
+  opts: ExtractOptions = {}
+): ProductInfo | null => {
+  const { fullScan = true, maxScripts = 8, maxChars } = opts;
 
   const scripts = allScripts();
-
   const typedJSON: HTMLScriptElement[] = [];
-  const noTypeButLooksJson: HTMLScriptElement[] = [];
+  const looksJSON: HTMLScriptElement[] = [];
 
   for (const s of scripts) {
     const t = scriptType(s);
@@ -24,9 +31,8 @@ export const extractNameFromAppJSON = (
       continue;
     }
     const txt = scriptText(s, maxChars);
-    if (!txt) continue;
-    if (looksLikeJsonPayload(txt) && !looksLikeLD(txt)) {
-      noTypeButLooksJson.push(s);
+    if (txt && looksLikeJsonPayload(txt) && !looksLikeLD(txt)) {
+      looksJSON.push(s);
     }
   }
 
@@ -44,78 +50,11 @@ export const extractNameFromAppJSON = (
     });
 
   sortPreferred(typedJSON);
-  sortPreferred(noTypeButLooksJson);
+  sortPreferred(looksJSON);
 
-  const buckets = [typedJSON, noTypeButLooksJson];
-
-  const tryExtractName = (data: any): string | null => {
-    const direct =
-      data?.props?.pageProps?.product?.title ??
-      data?.props?.pageProps?.product?.name ??
-      data?.product?.title ??
-      data?.product?.name ??
-      data?.data?.product?.title ??
-      data?.data?.product?.name ??
-      data?.state?.product?.name ??
-      data?.page?.product?.name ??
-      data?.item?.name ??
-      data?.item?.title;
-    if (typeof direct === "string" && direct) return direct;
-
-    const START =
-      typeof performance !== "undefined" && performance.now
-        ? performance.now()
-        : Date.now();
-    const TIME_BUDGET_MS = 120;
-    const HARD_NODE_MAX = 20_000;
-    const ARRAY_SLICE = 400;
-
-    const q: any[] = [data];
-    let visited = 0;
-
-    const hasProductSignals = (obj: any) =>
-      Object.keys(obj).some((k) =>
-        /price|sku|brand|image|product|variant|availability|gtin|mpn|category/i.test(
-          k
-        )
-      );
-
-    while (q.length) {
-      const now =
-        typeof performance !== "undefined" && performance.now
-          ? performance.now()
-          : Date.now();
-      if (now - START > TIME_BUDGET_MS) break;
-      if (++visited > HARD_NODE_MAX) break;
-
-      const node = q.shift();
-      if (!node || typeof node !== "object") continue;
-
-      if (Array.isArray(node)) {
-        const n = Math.min(node.length, ARRAY_SLICE);
-        for (let i = 0; i < n; i++) q.push(node[i]);
-        continue;
-      }
-
-      const n = (node as any).name;
-      const t = (node as any).title;
-      const h = (node as any).headline;
-      const candidate =
-        (typeof n === "string" && n) ||
-        (typeof t === "string" && t) ||
-        (typeof h === "string" && h);
-
-      if (candidate && hasProductSignals(node)) return candidate;
-
-      for (const k in node as any) {
-        const v = (node as any)[k];
-        if (v && typeof v === "object") q.push(v);
-      }
-    }
-    return null;
-  };
-
+  const buckets = [typedJSON, looksJSON];
   let checked = 0;
+
   for (const bucket of buckets) {
     for (const s of bucket) {
       if (!fullScan && checked >= maxScripts) return null;
@@ -127,10 +66,21 @@ export const extractNameFromAppJSON = (
       const data = safeParseJsonOrFirstObject(txt);
       if (!data) continue;
 
-      const name = tryExtractName(data);
-      if (name) return name;
+      const name = appPickName(data);
+      const { price, currency } = appPickPrice(data);
+      const imageUrl = appPickImage(data);
+      const productUrl = appPickUrl(data) || getCanonicalUrl();
+
+      if (name || imageUrl || price !== null) {
+        return {
+          name: name ?? null,
+          price,
+          currency,
+          imageUrl: imageUrl ?? null,
+          productUrl: productUrl ?? null,
+        };
+      }
     }
   }
-
   return null;
 };
