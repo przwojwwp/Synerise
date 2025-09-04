@@ -92,6 +92,37 @@ function render(shadowRoot: ShadowRoot) {
     empty.className = "empty";
     empty.textContent = "Your cart is empty.";
     list.appendChild(empty);
+  } else {
+    for (const it of state.items) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.id = it.id;
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.title = it.name || "";
+      name.innerHTML = it.productUrl
+        ? `<a href="${it.productUrl}" target="_blank" rel="noopener">${it.name}</a>`
+        : it.name || "";
+
+      const qty = document.createElement("div");
+      qty.className = "qty";
+      qty.textContent = String(it.quantity);
+
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = String(it.price ?? 0);
+
+      const line = document.createElement("div");
+      line.className = "total";
+      line.textContent = String((it.price ?? 0) * it.quantity);
+
+      row.appendChild(name);
+      row.appendChild(qty);
+      row.appendChild(price);
+      row.appendChild(line);
+      list.appendChild(row);
+    }
   }
 
   const footer = document.createElement("div");
