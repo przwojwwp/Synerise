@@ -12,7 +12,6 @@ import { getCanonicalUrl } from "../../helpers/url";
 import type { ProductInfo } from "../../types/ProductInfo";
 import type { ExtractOptions } from "../../types/ExtractOptions";
 
-
 export const extractInfoFromLDJSON = (
   opts: ExtractOptions = {}
 ): ProductInfo | null => {
