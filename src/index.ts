@@ -3,6 +3,7 @@ import type { ProductInfo } from "./types/ProductInfo";
 import { getProductInfo } from "./cart/getProductInfo";
 import { upsertProduct, getCart } from "./cart/cart";
 import { initCartPanel } from "./cart/cart-panel";
+import { CART_LS_KEY } from "./types/Cart";
 
 declare global {
   interface Window {
@@ -56,12 +57,19 @@ declare global {
   const saved = upsertProduct(info, 1);
   if (saved) {
     console.log(
-      "%c[MiniCart]%c saved to localStorage 'cart':",
+      "%c[MiniCart]%c saved to localStorage '%s':",
       yellow,
       "",
+      CART_LS_KEY,
       saved
     );
-    console.log("%c[MiniCart]%c current cart:", yellow, "", getCart());
+    console.log(
+      "%c[MiniCart]%c current cart (from '%s'):",
+      yellow,
+      "",
+      CART_LS_KEY,
+      getCart()
+    );
   } else {
     console.log(
       "%c[MiniCart]%c skipped — product incomplete (requires name, price, imageUrl, productUrl).",

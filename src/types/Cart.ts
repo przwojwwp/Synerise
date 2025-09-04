@@ -13,5 +13,5 @@ export type CartState = {
   items: CartItem[];
 };
 
-export const CART_LS_KEY = "cart";
+export const CART_LS_KEY = "__minicart:cart__";
 export const CART_VERSION = 1 as const;

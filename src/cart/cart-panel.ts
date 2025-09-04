@@ -1,4 +1,5 @@
 import { calcTotal, getCart, removeItem } from "./cart";
+import { CART_LS_KEY } from "../types/Cart";
 
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
@@ -183,6 +184,6 @@ export const initCartPanel = (): void => {
   window.addEventListener("minicart:change", () => render(shadow));
 
   window.addEventListener("storage", (ev) => {
-    if (ev.key === "cart") render(shadow);
+    if (ev.key === CART_LS_KEY) render(shadow);
   });
 };

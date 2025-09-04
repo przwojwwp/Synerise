@@ -9,9 +9,18 @@ import {
 } from "../types/Cart";
 import type { ProductInfo } from "../types/ProductInfo";
 
+const OLD_CART_LS_KEY = "cart";
 const nowIso = () => new Date().toISOString();
 
 export const loadCart = (): CartState => {
+  const existing = readLS<CartState>(CART_LS_KEY);
+  if (!existing) {
+    const legacy = readLS<CartState>(OLD_CART_LS_KEY);
+    if (legacy && Array.isArray(legacy.items)) {
+      writeLS(CART_LS_KEY, legacy);
+    }
+  }
+
   const data = readLS<CartState>(CART_LS_KEY);
   if (data && Array.isArray(data.items)) {
     return {
@@ -34,6 +43,7 @@ export const saveCart = (state: CartState): boolean => {
     updatedAt: nowIso(),
   };
   const ok = writeLS(CART_LS_KEY, payload);
+  console.debug("[MiniCart] saved to", CART_LS_KEY, payload);
 
   try {
     window.dispatchEvent(new CustomEvent("minicart:change"));
