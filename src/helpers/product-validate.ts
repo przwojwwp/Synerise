@@ -6,7 +6,8 @@ export const isCompleteProduct = (
 ): p is Required<ProductInfo> => {
   const nameOk = typeof p.name === "string" && p.name.trim().length > 1;
 
-  const priceOk = typeof p.price === "number" && Number.isFinite(p.price);
+  const priceOk =
+    typeof p.price === "number" && Number.isFinite(p.price) && p.price >= 0;
 
   const imgOk = typeof p.imageUrl === "string" && !!toAbsUrl(p.imageUrl);
 
