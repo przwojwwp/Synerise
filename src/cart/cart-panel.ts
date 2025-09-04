@@ -1,3 +1,5 @@
+import { calcTotal, getCart } from "./cart";
+
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
 
@@ -59,6 +61,9 @@ function styleTag(): HTMLStyleElement {
 }
 
 function render(shadowRoot: ShadowRoot) {
+  const state = getCart();
+  const total = calcTotal(state);
+
   const wrapper = document.createElement("div");
   wrapper.className = "panel";
   wrapper.id = PANEL_ID;
@@ -81,16 +86,19 @@ function render(shadowRoot: ShadowRoot) {
 
   const list = document.createElement("div");
   list.className = "list";
-  const empty = document.createElement("div");
-  empty.className = "empty";
-  empty.textContent = "Your cart is empty.";
-  list.appendChild(empty);
+
+  if (state.items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Your cart is empty.";
+    list.appendChild(empty);
+  }
 
   const footer = document.createElement("div");
   footer.className = "footer";
   footer.innerHTML = `
     <div>Total:</div>
-    <div>0</div>
+    <div>${String(total)}</div>
   `;
 
   shadowRoot.innerHTML = "";
