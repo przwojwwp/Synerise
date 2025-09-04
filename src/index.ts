@@ -2,6 +2,7 @@ import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 import type { ProductInfo } from "./types/ProductInfo";
 import { getProductInfo } from "./cart/getProductInfo";
 import { upsertProduct, getCart } from "./cart/cart";
+import { initCartPanel } from "./cart/cart-panel";
 
 declare global {
   interface Window {
@@ -16,6 +17,7 @@ declare global {
       ) => "ld+json" | "json" | "both" | "none";
       addToCart: (qty?: number) => import("./types/Cart").CartItem | null;
       getCart: () => import("./types/Cart").CartState;
+      initCartPanel: () => void;
     };
   }
 }
@@ -29,6 +31,7 @@ declare global {
       const p = getProductInfo({ fullScan: true });
       return upsertProduct(p, qty);
     },
+    initCartPanel,
   };
 
   const blue = "color: dodgerblue; font-weight: bold;";
@@ -66,4 +69,6 @@ declare global {
       ""
     );
   }
+
+  initCartPanel();
 })();
