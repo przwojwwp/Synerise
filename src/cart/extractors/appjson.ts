@@ -1,13 +1,44 @@
-export function extractNameFromAppJSON(): string | null {
-  const jsonScripts = Array.from(
-    document.querySelectorAll<HTMLScriptElement>("script[type]")
-  ).filter((s) => {
-    const typeLower = (s.type || "").toLowerCase();
-    return (
-      typeLower.startsWith("application/json") ||
-      (typeLower.includes("+json") && !typeLower.includes("ld+json"))
-    );
-  });
+import {
+  isAnyJsonButLd,
+  looksLikeJsonPayload,
+  looksLikeLD,
+} from "../../helpers/mime";
+import {
+  MAX_CHARS,
+  scriptText,
+  scriptType,
+  allScripts,
+} from "../../helpers/scripts";
+import { safeParseJsonOrFirstObject } from "../../helpers/json";
+
+type ExtractOptions = {
+  fullScan?: boolean;
+  maxScripts?: number;
+  maxChars?: number;
+};
+
+export function extractNameFromAppJSON(
+  options: ExtractOptions = {}
+): string | null {
+  const { fullScan = false, maxScripts = 8, maxChars = MAX_CHARS } = options;
+
+  const scripts = allScripts();
+
+  const typedJSON: HTMLScriptElement[] = [];
+  const noTypeButLooksJson: HTMLScriptElement[] = [];
+
+  for (const s of scripts) {
+    const t = scriptType(s);
+    if (isAnyJsonButLd(t)) {
+      typedJSON.push(s);
+      continue;
+    }
+    const txt = scriptText(s, maxChars);
+    if (!txt) continue;
+    if (looksLikeJsonPayload(txt) && !looksLikeLD(txt)) {
+      noTypeButLooksJson.push(s);
+    }
+  }
 
   const preferredIds = [
     /__NEXT_DATA__/,
@@ -15,11 +46,17 @@ export function extractNameFromAppJSON(): string | null {
     /__APOLLO_STATE__/i,
     /__INITIAL_STATE__/i,
   ];
-  jsonScripts.sort((a, b) => {
-    const ap = preferredIds.some((rx) => rx.test(a.id || ""));
-    const bp = preferredIds.some((rx) => rx.test(b.id || ""));
-    return ap === bp ? 0 : ap ? -1 : 1;
-  });
+  const sortPreferred = (arr: HTMLScriptElement[]) =>
+    arr.sort((a, b) => {
+      const ap = preferredIds.some((rx) => rx.test(a.id || ""));
+      const bp = preferredIds.some((rx) => rx.test(b.id || ""));
+      return ap === bp ? 0 : ap ? -1 : 1;
+    });
+
+  sortPreferred(typedJSON);
+  sortPreferred(noTypeButLooksJson);
+
+  const buckets = [typedJSON, noTypeButLooksJson];
 
   const tryExtractName = (data: any): string | null => {
     const direct =
@@ -33,7 +70,6 @@ export function extractNameFromAppJSON(): string | null {
       data?.page?.product?.name ??
       data?.item?.name ??
       data?.item?.title;
-
     if (typeof direct === "string" && direct) return direct;
 
     const START =
@@ -41,7 +77,7 @@ export function extractNameFromAppJSON(): string | null {
         ? performance.now()
         : Date.now();
     const TIME_BUDGET_MS = 120;
-    const HARD_NODE_MAX = 20000;
+    const HARD_NODE_MAX = 20_000;
     const ARRAY_SLICE = 400;
 
     const q: any[] = [data];
@@ -89,15 +125,22 @@ export function extractNameFromAppJSON(): string | null {
     return null;
   };
 
-  for (const s of jsonScripts) {
-    const txt = s.textContent?.trim();
-    if (!txt) continue;
-    try {
-      const data = JSON.parse(txt);
+  let checked = 0;
+  for (const bucket of buckets) {
+    for (const s of bucket) {
+      if (!fullScan && checked >= maxScripts) return null;
+      checked++;
+
+      const txt = scriptText(s, maxChars);
+      if (!txt) continue;
+
+      const data = safeParseJsonOrFirstObject(txt);
+      if (!data) continue;
+
       const name = tryExtractName(data);
       if (name) return name;
-    } catch {
     }
   }
+
   return null;
 }
