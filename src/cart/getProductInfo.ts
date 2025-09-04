@@ -37,8 +37,3 @@ export const getProductInfo = (options: ExtractOptions = {}): ProductInfo => {
     productUrl,
   };
 };
-
-export const getProductName = (options: ExtractOptions = {}): string | null => {
-  const info = getProductInfo(options);
-  return info.name;
-};
