@@ -14,6 +14,8 @@ declare global {
       detectDataFormat: (
         fullScan?: boolean
       ) => "ld+json" | "json" | "both" | "none";
+      addToCart: (qty?: number) => import("./types/Cart").CartItem | null;
+      getCart: () => import("./types/Cart").CartState;
     };
   }
 }
