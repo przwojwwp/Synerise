@@ -1,6 +1,6 @@
-export interface ProductInfo {
+export type ProductInfo = {
   name: string | null;
   price?: number | null;
   imageUrl?: string | null;
   url?: string | null;
-}
+};
