@@ -33,7 +33,12 @@ export const saveCart = (state: CartState): boolean => {
     version: CART_VERSION,
     updatedAt: nowIso(),
   };
-  return writeLS(CART_LS_KEY, payload);
+  const ok = writeLS(CART_LS_KEY, payload);
+
+  try {
+    window.dispatchEvent(new CustomEvent("minicart:change"));
+  } catch {}
+  return ok;
 };
 
 export const upsertProduct = (info: ProductInfo, qty = 1): CartItem | null => {
