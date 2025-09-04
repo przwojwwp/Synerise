@@ -40,29 +40,24 @@ export const ldPickImage = (n: any): string | null =>
 export const ldPickUrl = (n: any): string | null =>
   pickUrl(n?.url) || pickUrl(n?.mainEntityOfPage) || null;
 
-export const ldPickPrice = (
-  n: any
-): { price: number | null; currency: string | null } => {
+export const ldPickPrice = (n: any): number | null => {
   const offers = n?.offers;
-  if (!offers) return { price: null, currency: null };
+  if (!offers) return null;
   const arr = Array.isArray(offers) ? offers : [offers];
+
   for (const ofr of arr) {
     const raw =
       pickString(ofr?.price) || pickString(ofr?.priceSpecification?.price);
-    const currency =
-      pickString(ofr?.priceCurrency) ||
-      pickString(ofr?.priceSpecification?.priceCurrency) ||
-      null;
     const price = normalizePrice(raw);
-    if (price !== null) return { price, currency };
+    if (price !== null) return price;
 
     const lp = normalizePrice(pickString(ofr?.lowPrice));
+    if (lp !== null) return lp;
+
     const hp = normalizePrice(pickString(ofr?.highPrice));
-    const cur = pickString(ofr?.priceCurrency) || null;
-    if (lp !== null) return { price: lp, currency: cur };
-    if (hp !== null) return { price: hp, currency: cur };
+    if (hp !== null) return hp;
   }
-  return { price: null, currency: null };
+  return null;
 };
 
 // App JSON
@@ -124,9 +119,7 @@ export const appPickUrl = (n: any): string | null =>
   pickUrl(n?.item?.url) ||
   pickUrl(n?.url);
 
-export const appPickPrice = (
-  n: any
-): { price: number | null; currency: string | null } => {
+export const appPickPrice = (n: any): number | null => {
   const candidates = [
     n?.props?.pageProps?.product,
     n?.product,
@@ -145,14 +138,9 @@ export const appPickPrice = (
       pickString(p?.price?.value) ||
       pickString(p?.pricing?.price) ||
       pickString(p?.pricing?.current?.value);
-    const currency =
-      pickString(p?.currency) ||
-      pickString(p?.priceCurrency) ||
-      pickString(p?.pricing?.currency) ||
-      null;
 
     const price = normalizePrice(raw);
-    if (price !== null) return { price, currency };
+    if (price !== null) return price;
 
     const offers = (p as any).offers;
     if (offers) {
@@ -162,14 +150,10 @@ export const appPickPrice = (
           pickString(ofr?.price) ||
           pickString(ofr?.priceSpecification?.price) ||
           pickString(ofr?.amount);
-        const c =
-          pickString(ofr?.priceCurrency) ||
-          pickString(ofr?.priceSpecification?.priceCurrency) ||
-          null;
         const pr = normalizePrice(r);
-        if (pr !== null) return { price: pr, currency: c };
+        if (pr !== null) return pr;
       }
     }
   }
-  return { price: null, currency: null };
+  return null;
 };

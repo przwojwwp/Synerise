@@ -67,7 +67,7 @@ export const extractInfoFromAppJSON = (
       if (!data) continue;
 
       const name = appPickName(data);
-      const { price, currency } = appPickPrice(data);
+      const price = appPickPrice(data);
       const imageUrl = appPickImage(data);
       const productUrl = appPickUrl(data) || getCanonicalUrl();
 
@@ -75,7 +75,6 @@ export const extractInfoFromAppJSON = (
         return {
           name: name ?? null,
           price,
-          currency,
           imageUrl: imageUrl ?? null,
           productUrl: productUrl ?? null,
         };

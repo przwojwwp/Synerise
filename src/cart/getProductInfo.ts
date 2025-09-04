@@ -32,7 +32,6 @@ export const getProductInfo = (options: ExtractOptions = {}): ProductInfo => {
   return {
     name,
     price,
-    currency,
     imageUrl,
     productUrl,
   };

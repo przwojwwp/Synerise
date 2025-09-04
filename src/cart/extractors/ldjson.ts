@@ -64,14 +64,13 @@ export const extractInfoFromLDJSON = (
 
           const name = ldPickName(prod);
           const imageUrl = ldPickImage(prod);
-          const { price, currency } = ldPickPrice(prod);
+          const price = ldPickPrice(prod);
           const productUrl = ldPickUrl(prod) || getCanonicalUrl();
 
           if (name || imageUrl || price !== null) {
             return {
               name: name ?? null,
               price,
-              currency,
               imageUrl: imageUrl ?? null,
               productUrl: productUrl ?? null,
             };
@@ -82,14 +81,13 @@ export const extractInfoFromLDJSON = (
         if (rootProd) {
           const name = ldPickName(rootProd);
           const imageUrl = ldPickImage(rootProd);
-          const { price, currency } = ldPickPrice(rootProd);
+          const price = ldPickPrice(rootProd);
           const productUrl = ldPickUrl(rootProd) || getCanonicalUrl();
 
           if (name || imageUrl || price !== null) {
             return {
               name: name ?? null,
               price,
-              currency,
               imageUrl: imageUrl ?? null,
               productUrl: productUrl ?? null,
             };

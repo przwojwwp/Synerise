@@ -33,13 +33,9 @@ declare global {
   const t0 = performance.now?.() ?? Date.now();
   const format = detectDataFormat(true);
   const info = getProductInfo({ fullScan: true });
-
   const t1 = performance.now?.() ?? Date.now();
 
   console.log("Detected data format: %c%s", blue, format);
-  console.log("Product info:", {
-    ...info,
-    priceWithCurrency: `${info.price} ${info.currency}`,
-  });
+  console.log("Product info:", info);
   console.log("%cScan time:%c %d ms", yellow, "", Math.round(t1 - t0));
 })();
