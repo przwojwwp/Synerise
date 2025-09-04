@@ -1,6 +1,7 @@
 import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 import type { ProductInfo } from "./types/ProductInfo";
 import { getProductInfo } from "./cart/getProductInfo";
+import { upsertProduct, getCart } from "./cart/cart";
 
 declare global {
   interface Window {
@@ -18,7 +19,15 @@ declare global {
 }
 
 (() => {
-  (window as any).MiniCart = { getProductInfo, detectDataFormat };
+  (window as any).MiniCart = {
+    getProductInfo,
+    detectDataFormat,
+    getCart,
+    addToCart: (qty = 1) => {
+      const p = getProductInfo({ fullScan: true });
+      return upsertProduct(p, qty);
+    },
+  };
 
   const blue = "color: dodgerblue; font-weight: bold;";
   const yellow = "color: gold; font-weight: bold;";
@@ -38,4 +47,13 @@ declare global {
   console.log("Detected data format: %c%s", blue, format);
   console.log("Product info:", info);
   console.log("%cScan time:%c %d ms", yellow, "", Math.round(t1 - t0));
+
+  const saved = upsertProduct(info, 1);
+  console.log(
+    "%c[MiniCart]%c saved to localStorage 'cart':",
+    yellow,
+    "",
+    saved
+  );
+  console.log("%c[MiniCart]%c current cart:", yellow, "", getCart());
 })();
