@@ -20,20 +20,20 @@ export const normalizePrice = (raw?: string | null): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-export const domFallbackPrice = (): {
-  price: number | null;
-  currency: string | null;
-} => {
+export const domFallbackPrice = (): number | null => {
   const amount =
     getMeta('meta[property="product:price:amount"]') ||
     getMeta('meta[property="og:price:amount"]') ||
-    getMeta('meta[itemprop="price"]');
-  const currency =
-    getMeta('meta[property="product:price:currency"]') ||
-    getMeta('meta[property="og:price:currency"]') ||
-    getMeta('meta[itemprop="priceCurrency"]') ||
+    getMeta('meta[itemprop="price"]') ||
+    document
+      .querySelector<HTMLElement>('[itemprop="price"]')
+      ?.getAttribute("content") ||
+    document
+      .querySelector<HTMLElement>('[itemprop="price"]')
+      ?.textContent?.trim() ||
     null;
-  return { price: normalizePrice(amount), currency };
+
+  return normalizePrice(amount);
 };
 
 export const domFallbackImage = (): string | null => {

@@ -25,7 +25,7 @@ export const getProductInfo = (options: ExtractOptions = {}): ProductInfo => {
   }
 
   const name = domFallbackName();
-  const { price, currency } = domFallbackPrice();
+  const price = domFallbackPrice();
   const imageUrl = domFallbackImage();
   const productUrl = getCanonicalUrl();
 
