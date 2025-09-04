@@ -1,4 +1,4 @@
-import { calcTotal, getCart } from "./cart";
+import { calcTotal, getCart, removeItem } from "./cart";
 
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
@@ -117,10 +117,26 @@ function render(shadowRoot: ShadowRoot) {
       line.className = "total";
       line.textContent = String((it.price ?? 0) * it.quantity);
 
+      const remove = document.createElement("button");
+      remove.className = "remove";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", (e) => {
+        e.preventDefault();
+        removeItem(it.id);
+      });
+
       row.appendChild(name);
       row.appendChild(qty);
       row.appendChild(price);
-      row.appendChild(line);
+
+      const totalWrap = document.createElement("div");
+      totalWrap.style.display = "flex";
+      totalWrap.style.alignItems = "center";
+      totalWrap.style.gap = "6px";
+      totalWrap.appendChild(line);
+      totalWrap.appendChild(remove);
+      row.appendChild(totalWrap);
+
       list.appendChild(row);
     }
   }
