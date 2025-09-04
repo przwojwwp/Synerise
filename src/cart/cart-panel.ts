@@ -3,7 +3,7 @@ import { calcTotal, getCart, removeItem } from "./cart";
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
 
-function ensureHost(): HTMLElement {
+const ensureHost = (): HTMLElement => {
   let host = document.getElementById(PANEL_SHADOW_HOST_ID);
   if (!host) {
     host = document.createElement("div");
@@ -15,13 +15,13 @@ function ensureHost(): HTMLElement {
     document.documentElement.appendChild(host);
   }
   return host;
-}
+};
 
-function getShadowRoot(host: HTMLElement): ShadowRoot {
+const getShadowRoot = (host: HTMLElement): ShadowRoot => {
   return host.shadowRoot ?? host.attachShadow({ mode: "open" });
-}
+};
 
-function styleTag(): HTMLStyleElement {
+const styleTag = (): HTMLStyleElement => {
   const style = document.createElement("style");
   style.textContent = `
     .panel {
@@ -58,9 +58,9 @@ function styleTag(): HTMLStyleElement {
     a { color: inherit; text-decoration: none; }
   `;
   return style;
-}
+};
 
-function render(shadowRoot: ShadowRoot) {
+const render = (shadowRoot: ShadowRoot) => {
   const state = getCart();
   const total = calcTotal(state);
 
@@ -155,10 +155,16 @@ function render(shadowRoot: ShadowRoot) {
   wrapper.appendChild(list);
   wrapper.appendChild(footer);
   shadowRoot.appendChild(wrapper);
-}
+};
 
-export function initCartPanel(): void {
+export const initCartPanel = (): void => {
   const host = ensureHost();
   const shadow = getShadowRoot(host);
   render(shadow);
-}
+
+  window.addEventListener("minicart:change", () => render(shadow));
+
+  window.addEventListener("storage", (ev) => {
+    if (ev.key === "cart") render(shadow);
+  });
+};
