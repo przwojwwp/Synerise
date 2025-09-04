@@ -150,7 +150,7 @@ function render(shadowRoot: ShadowRoot) {
 
   shadowRoot.innerHTML = "";
   shadowRoot.appendChild(styleTag());
-  shadowRoot.appendChild(toggle);
+  wrapper.appendChild(toggle);
   wrapper.appendChild(header);
   wrapper.appendChild(list);
   wrapper.appendChild(footer);
