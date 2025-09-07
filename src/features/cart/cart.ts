@@ -2,9 +2,13 @@ import { fromCents, toCents } from "@/lib/money";
 import { getProductId } from "@/lib/product/product-id";
 import { isCompleteProduct } from "@/lib/product/product-validate";
 import { readLS, writeLS } from "@/lib/storage/ls";
-import { CART_LS_KEY, CART_VERSION, type CartItem, type CartState } from "@/types/Cart";
+import {
+  CART_LS_KEY,
+  CART_VERSION,
+  type CartItem,
+  type CartState,
+} from "@/types/Cart";
 import type { ProductInfo } from "@/types/ProductInfo";
-
 
 const OLD_CART_LS_KEY = "cart";
 const nowIso = () => new Date().toISOString();
@@ -40,8 +44,6 @@ export const saveCart = (state: CartState): boolean => {
     updatedAt: nowIso(),
   };
   const ok = writeLS(CART_LS_KEY, payload);
-  console.debug("[MiniCart] saved to", CART_LS_KEY, payload);
-
   try {
     window.dispatchEvent(new CustomEvent("minicart:change"));
   } catch {}
@@ -49,9 +51,7 @@ export const saveCart = (state: CartState): boolean => {
 };
 
 export const upsertProduct = (info: ProductInfo, qty = 1): CartItem | null => {
-  if (!isCompleteProduct(info)) {
-    return null;
-  }
+  if (!isCompleteProduct(info)) return null;
 
   const id = getProductId(info);
   const state = loadCart();
@@ -84,11 +84,37 @@ export const removeItem = (id: string): boolean => {
   const state = loadCart();
   const before = state.items.length;
   state.items = state.items.filter((it) => it.id !== id);
-  if (state.items.length !== before) {
-    return saveCart(state);
-  }
+  return before !== state.items.length ? saveCart(state) : false;
+};
 
-  return false;
+export const setQuantity = (id: string, qty: number): boolean => {
+  const state = loadCart();
+  const item = state.items.find((i) => i.id === id);
+  if (!item) return false;
+
+  const next = Math.max(1, Math.floor(qty));
+  if (item.quantity === next) return false;
+
+  item.quantity = next;
+  item.updatedAt = nowIso();
+  return saveCart(state);
+};
+
+export const removeSome = (id: string, count = 1): boolean => {
+  const state = loadCart();
+  const item = state.items.find((i) => i.id === id);
+  if (!item) return false;
+
+  const n = Math.max(1, Math.min(item.quantity, Math.floor(count)));
+  const left = item.quantity - n;
+
+  if (left <= 0) {
+    state.items = state.items.filter((i) => i.id !== id);
+  } else {
+    item.quantity = left;
+    item.updatedAt = nowIso();
+  }
+  return saveCart(state);
 };
 
 export const calcTotal = (state = loadCart()): number => {
@@ -100,6 +126,4 @@ export const calcTotal = (state = loadCart()): number => {
   return fromCents(cents);
 };
 
-export const getCart = (): CartState => {
-  return loadCart();
-};
+export const getCart = (): CartState => loadCart();

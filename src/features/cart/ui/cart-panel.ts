@@ -1,6 +1,12 @@
 import { asNumber, fmt, fromCents, toCents } from "@/lib/money";
-import { calcTotal, getCart, removeItem } from "@/features/cart/cart";
+import {
+  calcTotal,
+  getCart,
+  removeSome,
+  removeItem,
+} from "@/features/cart/cart";
 import { CART_LS_KEY } from "@/types/Cart";
+import { styleTag } from "./cart-panel-styles";
 
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
@@ -22,81 +28,50 @@ const ensureHost = (): HTMLElement => {
 const getShadowRoot = (host: HTMLElement): ShadowRoot =>
   host.shadowRoot ?? host.attachShadow({ mode: "open" });
 
-const styleTag = (): HTMLStyleElement => {
-  const style = document.createElement("style");
-  style.textContent = `
-    .panel {
-      position: relative;
-      box-shadow: 0 6px 24px rgba(0,0,0,.2);
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 10px;
-      background: #fff;
-      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      min-width: 280px;
-      max-width: 360px;
-      color: #111;
-      overflow: hidden;
-    }
-    .header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 10px 12px; border-bottom: 1px solid rgba(0,0,0,.08);
-      background: #fafafa;
-    }
-    .title { font-weight: 700; }
-    .close { border: 0; color: black; background: transparent; cursor: pointer; font-size: 18px; }
-    .list { max-height: 280px; overflow: auto; }
-    .row {
-      display:grid; grid-template-columns: 1fr auto auto auto; gap: 8px;
-      align-items:center; padding: 8px 12px; border-bottom: 1px dashed rgba(0,0,0,.06);
-    }
-    .row:last-child { border-bottom: 0; }
-    .row .name { font-weight: 600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .row .qty { text-align:right; min-width: 2ch; }
-    .row .price, .row .total { text-align:right; white-space:nowrap; }
-    .row .remove { margin-left: 8px; cursor:pointer; border:0; background:transparent; color:#c00; }
-    .footer {
-      padding: 10px 12px; display:flex; justify-content:space-between; align-items:center;
-      background: #fafafa; border-top: 1px solid rgba(0,0,0,.08);
-      font-weight: 700;
-    }
-    .empty { padding: 16px; text-align:center; color:#666; }
-    .toggle {
-      position: absolute; top: -36px; right: 0;
-      border-radius: 10px 10px 0 0;
-      background: #111; color: #fff; padding: 6px 10px; font-size: 12px;
-      border: 0; cursor: pointer;
-    }
-    a { color: inherit; text-decoration: none; }
-  `;
-  return style;
-};
 
 const render = (shadowRoot: ShadowRoot) => {
   const state = getCart();
   const total = calcTotal(state);
 
+  const prevDock = shadowRoot.querySelector<HTMLDivElement>(".dock");
+  const wasOpen = prevDock?.classList.contains("open") ?? true;
+
+  const dock = document.createElement("div");
+  dock.className = "dock" + (wasOpen ? " open" : "");
+
+  const toggle = document.createElement("button");
+  toggle.className = "toggle";
+  toggle.type = "button";
+  toggle.setAttribute("aria-controls", PANEL_ID);
+  toggle.setAttribute("aria-expanded", String(wasOpen));
+  toggle.textContent = wasOpen ? "Hide cart" : "Cart";
+  toggle.addEventListener("click", () => {
+    const isOpen = dock.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.textContent = isOpen ? "Hide cart" : "Cart";
+  });
+
   const wrapper = document.createElement("div");
   wrapper.className = "panel";
   wrapper.id = PANEL_ID;
 
-  const toggle = document.createElement("button");
-  toggle.className = "toggle";
-  toggle.textContent = "Cart";
-  toggle.addEventListener("click", () => {
-    const el = shadowRoot.getElementById(PANEL_ID);
-    if (!el) return;
-    el.style.display = el.style.display === "none" ? "" : "none";
-  });
-
   const header = document.createElement("div");
   header.className = "header";
-  header.innerHTML = `
-    <div class="title">Mini Cart</div>
-    <button class="close" aria-label="Close panel">×</button>
-  `;
+  header.innerHTML = `<div class="title">Mini Cart</div>`;
 
   const list = document.createElement("div");
   list.className = "list";
+
+  const cols = document.createElement("div");
+  cols.className = "cols";
+  cols.innerHTML = `
+    <div>Name</div>
+    <div class="price">Price</div>
+    <div class="quantity">Quantity</div>
+    <div class="total">Total</div>
+    <div class="actions">Actions</div>
+  `;
+  list.appendChild(cols);
 
   if (state.items.length === 0) {
     const empty = document.createElement("div");
@@ -116,65 +91,85 @@ const render = (shadowRoot: ShadowRoot) => {
         ? `<a href="${it.productUrl}" target="_blank" rel="noopener">${it.name}</a>`
         : it.name || "";
 
-      const qty = document.createElement("div");
-      qty.className = "qty";
-      qty.textContent = String(it.quantity);
-
       const price = document.createElement("div");
       price.className = "price";
       const unit = asNumber(it.price);
       price.textContent = fmt(unit);
 
-      const line = document.createElement("div");
-      line.className = "total";
-      const lineCents = toCents(unit) * it.quantity;
-      line.textContent = fromCents(lineCents).toFixed(2);
+      const qty = document.createElement("div");
+      qty.className = "quantity";
+      qty.textContent = String(it.quantity);
 
-      const remove = document.createElement("button");
-      remove.className = "remove";
-      remove.textContent = "Remove";
-      remove.addEventListener("click", (e) => {
-        e.preventDefault();
-        removeItem(it.id);
+      const totalCell = document.createElement("div");
+      totalCell.className = "total";
+      const lineCents = toCents(unit) * it.quantity;
+      totalCell.textContent = fmt(fromCents(lineCents));
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const controls = document.createElement("div");
+      controls.className = "controls";
+
+      const stepper = document.createElement("div");
+      stepper.className = "stepper";
+
+      const minusBtn = document.createElement("button");
+      minusBtn.type = "button";
+      minusBtn.setAttribute("aria-label", "Decrease");
+      minusBtn.textContent = "−";
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = "1";
+      input.max = String(it.quantity);
+      input.value = "1";
+
+      const plusBtn = document.createElement("button");
+      plusBtn.type = "button";
+      plusBtn.setAttribute("aria-label", "Increase");
+      plusBtn.textContent = "+";
+
+      const clamp = (v: number) => Math.max(1, Math.min(it.quantity, v));
+      minusBtn.addEventListener("click", () => {
+        input.value = String(clamp((parseInt(input.value) || 1) - 1));
+      });
+      plusBtn.addEventListener("click", () => {
+        input.value = String(clamp((parseInt(input.value) || 1) + 1));
+      });
+      input.addEventListener("input", () => {
+        input.value = String(clamp(parseInt(input.value) || 1));
       });
 
-      row.appendChild(name);
-      row.appendChild(qty);
-      row.appendChild(price);
+      stepper.append(minusBtn, input, plusBtn);
 
-      const totalWrap = document.createElement("div");
-      totalWrap.style.display = "flex";
-      totalWrap.style.alignItems = "center";
-      totalWrap.style.gap = "6px";
-      totalWrap.appendChild(line);
-      totalWrap.appendChild(remove);
-      row.appendChild(totalWrap);
+      const rmBtn = document.createElement("button");
+      rmBtn.className = "removeBtn";
+      rmBtn.textContent = "Remove";
+      rmBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const n = clamp(parseInt(input.value) || 1);
+        if (n >= it.quantity) removeItem(it.id);
+        else removeSome(it.id, n);
+      });
 
+      controls.append(stepper, rmBtn);
+      actions.appendChild(controls);
+
+      row.append(name, price, qty, totalCell, actions);
       list.appendChild(row);
     }
   }
 
   const footer = document.createElement("div");
   footer.className = "footer";
-  footer.innerHTML = `
-    <div>Total:</div>
-    <div>${total.toFixed(2)}</div>
-  `;
-
-  header
-    .querySelector<HTMLButtonElement>(".close")!
-    .addEventListener("click", () => {
-      const el = shadowRoot.getElementById(PANEL_ID);
-      if (el) el.style.display = "none";
-    });
+  footer.innerHTML = `<div>Total:</div><div>${total.toFixed(2)}</div>`;
 
   shadowRoot.innerHTML = "";
   shadowRoot.appendChild(styleTag());
-  wrapper.appendChild(toggle);
-  wrapper.appendChild(header);
-  wrapper.appendChild(list);
-  wrapper.appendChild(footer);
-  shadowRoot.appendChild(wrapper);
+
+  wrapper.append(header, list, footer);
+  dock.append(toggle, wrapper);
+  shadowRoot.appendChild(dock);
 };
 
 export const initCartPanel = (): void => {
