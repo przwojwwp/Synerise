@@ -43,7 +43,7 @@ const styleTag = (): HTMLStyleElement => {
       background: #fafafa;
     }
     .title { font-weight: 700; }
-    .close { border: 0; background: transparent; cursor: pointer; font-size: 18px; }
+    .close { border: 0; color: black; background: transparent; cursor: pointer; font-size: 18px; }
     .list { max-height: 280px; overflow: auto; }
     .row {
       display:grid; grid-template-columns: 1fr auto auto auto; gap: 8px;

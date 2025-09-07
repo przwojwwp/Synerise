@@ -1,6 +1,9 @@
 export const asNumber = (v: unknown): number => {
   if (typeof v === "number") return v;
-  if (typeof v === "string") return parseFloat(v.replace(",", "."));
+  if (typeof v === "string") {
+    const n = parseFloat(v.replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  }
   return 0;
 };
 
