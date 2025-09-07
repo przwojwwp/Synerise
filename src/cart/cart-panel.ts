@@ -1,5 +1,6 @@
 import { calcTotal, getCart, removeItem } from "./cart";
 import { CART_LS_KEY } from "../types/Cart";
+import { asNumber, fmt, fromCents, toCents } from "../helpers/money";
 
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
@@ -18,9 +19,8 @@ const ensureHost = (): HTMLElement => {
   return host;
 };
 
-const getShadowRoot = (host: HTMLElement): ShadowRoot => {
-  return host.shadowRoot ?? host.attachShadow({ mode: "open" });
-};
+const getShadowRoot = (host: HTMLElement): ShadowRoot =>
+  host.shadowRoot ?? host.attachShadow({ mode: "open" });
 
 const styleTag = (): HTMLStyleElement => {
   const style = document.createElement("style");
@@ -71,9 +71,10 @@ const styleTag = (): HTMLStyleElement => {
   return style;
 };
 
+/** --- render ------------------------------------------------------------ */
 const render = (shadowRoot: ShadowRoot) => {
-  const state = getCart();
-  const total = calcTotal(state);
+  const state = getCart(); // stan koszyka
+  const total = calcTotal(state); // liczony w groszach po stronie cart.ts
 
   const wrapper = document.createElement("div");
   wrapper.className = "panel";
@@ -122,11 +123,13 @@ const render = (shadowRoot: ShadowRoot) => {
 
       const price = document.createElement("div");
       price.className = "price";
-      price.textContent = String(it.price ?? 0);
+      const unit = asNumber(it.price);
+      price.textContent = fmt(unit);
 
       const line = document.createElement("div");
       line.className = "total";
-      line.textContent = String((it.price ?? 0) * it.quantity);
+      const lineCents = toCents(unit) * it.quantity;
+      line.textContent = fromCents(lineCents).toFixed(2);
 
       const remove = document.createElement("button");
       remove.className = "remove";
@@ -156,7 +159,7 @@ const render = (shadowRoot: ShadowRoot) => {
   footer.className = "footer";
   footer.innerHTML = `
     <div>Total:</div>
-    <div>${String(total)}</div>
+    <div>${total.toFixed(2)}</div>
   `;
 
   header
@@ -166,14 +169,13 @@ const render = (shadowRoot: ShadowRoot) => {
       if (el) el.style.display = "none";
     });
 
-  const root = shadowRoot;
-  root.innerHTML = "";
-  root.appendChild(styleTag());
+  shadowRoot.innerHTML = "";
+  shadowRoot.appendChild(styleTag());
   wrapper.appendChild(toggle);
   wrapper.appendChild(header);
   wrapper.appendChild(list);
   wrapper.appendChild(footer);
-  root.appendChild(wrapper);
+  shadowRoot.appendChild(wrapper);
 };
 
 export const initCartPanel = (): void => {
@@ -182,7 +184,6 @@ export const initCartPanel = (): void => {
   render(shadow);
 
   window.addEventListener("minicart:change", () => render(shadow));
-
   window.addEventListener("storage", (ev) => {
     if (ev.key === CART_LS_KEY) render(shadow);
   });

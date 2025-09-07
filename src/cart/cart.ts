@@ -1,4 +1,5 @@
 import { readLS, writeLS } from "../helpers/ls";
+import { fromCents, toCents } from "../helpers/money";
 import { getProductId } from "../helpers/product-id";
 import { isCompleteProduct } from "../helpers/product-validate";
 import {
@@ -95,11 +96,13 @@ export const removeItem = (id: string): boolean => {
 };
 
 export const calcTotal = (state = loadCart()): number => {
-  return state.items.reduce((sum, it) => {
-    const price = typeof it.price === "number" ? it.price : 0;
-    return +(sum + price * it.quantity).toFixed(2);
+  const cents = state.items.reduce((sum, it) => {
+    const unit = (typeof it.price === "number" && Number.isFinite(it.price)) ? it.price : 0;
+    return sum + toCents(unit) * it.quantity;
   }, 0);
+  return fromCents(cents);
 };
+
 
 export const getCart = (): CartState => {
   return loadCart();
