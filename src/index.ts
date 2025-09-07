@@ -7,6 +7,7 @@ import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 
 declare global {
   interface Window {
+    __minicartBooted__?: boolean;
     MiniCart: {
       getProductInfo: (opts?: {
         fullScan?: boolean;
@@ -24,6 +25,10 @@ declare global {
 }
 
 (() => {
+  if (window.top !== window.self) return;
+  if (window.__minicartBooted__) return;
+  window.__minicartBooted__ = true;
+
   (window as any).MiniCart = {
     getProductInfo,
     detectDataFormat,
@@ -45,16 +50,19 @@ declare global {
     ""
   );
 
+  const isComplete = (p: ProductInfo) =>
+    !!(p.name && p.imageUrl && p.productUrl && p.price !== null);
+
   const t0 = performance.now?.() ?? Date.now();
   const format = detectDataFormat(true);
-  const info = getProductInfo({ fullScan: true });
+  let info = getProductInfo({ fullScan: true });
   const t1 = performance.now?.() ?? Date.now();
 
   console.log("Detected data format: %c%s", blue, format);
   console.log("Product info:", info);
   console.log("%cScan time:%c %d ms", yellow, "", Math.round(t1 - t0));
 
-  const saved = upsertProduct(info, 1);
+  let saved = upsertProduct(info, 1);
   if (saved) {
     console.log(
       "%c[MiniCart]%c saved to localStorage '%s':",
@@ -76,6 +84,44 @@ declare global {
       yellow,
       ""
     );
+  }
+
+  if (!isComplete(info)) {
+    const MAX_ATTEMPTS = 3;
+    const DELAY_MS = 700;
+    let attempt = 0;
+
+    const retry = () => {
+      attempt += 1;
+      const again = getProductInfo({ fullScan: true });
+
+      if (isComplete(again)) {
+        const saved2 = upsertProduct(again, 1);
+        if (saved2) {
+          console.log("[MiniCart] completed on retry #%d", attempt);
+          console.log(
+            "%c[MiniCart]%c saved to localStorage '%s' (retry):",
+            yellow,
+            "",
+            CART_LS_KEY,
+            saved2
+          );
+          console.log(
+            "%c[MiniCart]%c current cart (from '%s'):",
+            yellow,
+            "",
+            CART_LS_KEY,
+            getCart()
+          );
+        }
+        return;
+      }
+      if (attempt < MAX_ATTEMPTS) {
+        setTimeout(retry, DELAY_MS);
+      }
+    };
+
+    setTimeout(retry, DELAY_MS);
   }
 
   initCartPanel();
