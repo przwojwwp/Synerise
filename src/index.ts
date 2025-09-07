@@ -1,7 +1,6 @@
 import { getCart, upsertProduct } from "./features/cart/cart";
 import { getProductInfo } from "./features/cart/getProductInfo";
 import { initCartPanel } from "./features/cart/ui/cart-panel";
-import { CART_LS_KEY } from "./types/Cart";
 import type { ProductInfo } from "./types/ProductInfo";
 import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 
@@ -40,52 +39,14 @@ declare global {
     initCartPanel,
   };
 
-  const blue = "color: dodgerblue; font-weight: bold;";
-  const yellow = "color: gold; font-weight: bold;";
-
-  console.log(
-    "Tip: You can run %cMiniCart.getProductInfo%c()%c — optionally with { fullScan: false, maxScripts: 8 }",
-    yellow,
-    blue,
-    ""
-  );
-
   const isComplete = (p: ProductInfo) =>
     !!(p.name && p.imageUrl && p.productUrl && p.price !== null);
 
-  const t0 = performance.now?.() ?? Date.now();
-  const format = detectDataFormat(true);
+  // pierwsze podejście — spróbuj od razu zapisać produkt
   let info = getProductInfo({ fullScan: true });
-  const t1 = performance.now?.() ?? Date.now();
+  upsertProduct(info, 1);
 
-  console.log("Detected data format: %c%s", blue, format);
-  console.log("Product info:", info);
-  console.log("%cScan time:%c %d ms", yellow, "", Math.round(t1 - t0));
-
-  let saved = upsertProduct(info, 1);
-  if (saved) {
-    console.log(
-      "%c[MiniCart]%c saved to localStorage '%s':",
-      yellow,
-      "",
-      CART_LS_KEY,
-      saved
-    );
-    console.log(
-      "%c[MiniCart]%c current cart (from '%s'):",
-      yellow,
-      "",
-      CART_LS_KEY,
-      getCart()
-    );
-  } else {
-    console.log(
-      "%c[MiniCart]%c skipped — product incomplete (requires name, price, imageUrl, productUrl).",
-      yellow,
-      ""
-    );
-  }
-
+  // jeśli strona jeszcze „dochodzi”, spróbuj uzupełnić brakujące dane
   if (!isComplete(info)) {
     const MAX_ATTEMPTS = 3;
     const DELAY_MS = 700;
@@ -94,26 +55,8 @@ declare global {
     const retry = () => {
       attempt += 1;
       const again = getProductInfo({ fullScan: true });
-
       if (isComplete(again)) {
-        const saved2 = upsertProduct(again, 1);
-        if (saved2) {
-          console.log("[MiniCart] completed on retry #%d", attempt);
-          console.log(
-            "%c[MiniCart]%c saved to localStorage '%s' (retry):",
-            yellow,
-            "",
-            CART_LS_KEY,
-            saved2
-          );
-          console.log(
-            "%c[MiniCart]%c current cart (from '%s'):",
-            yellow,
-            "",
-            CART_LS_KEY,
-            getCart()
-          );
-        }
+        upsertProduct(again, 1);
         return;
       }
       if (attempt < MAX_ATTEMPTS) {
