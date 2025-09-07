@@ -97,7 +97,7 @@ export const removeItem = (id: string): boolean => {
 export const calcTotal = (state = loadCart()): number => {
   return state.items.reduce((sum, it) => {
     const price = typeof it.price === "number" ? it.price : 0;
-    return sum + price * it.quantity;
+    return +(sum + price * it.quantity).toFixed(2);
   }, 0);
 };
 
