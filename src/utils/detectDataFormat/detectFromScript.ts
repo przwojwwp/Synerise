@@ -1,7 +1,7 @@
-import type { DataFormat } from "../../types/DataFormat";
-import { isAnyJsonButLd, isLdType, looksLikeLD } from "../../helpers/mime";
-import { scriptText, scriptType } from "../../helpers/scripts";
-import type { DetectOptions } from "../../types/DetectOptions";
+import { isAnyJsonButLd, isLdType, looksLikeLD } from "@/lib/web/mime";
+import { scriptText, scriptType } from "@/lib/web/scripts";
+import type { DataFormat } from "@/types/DataFormat";
+import type { DetectOptions } from "@/types/DetectOptions";
 
 export const detectFromScripts = (
   scripts: HTMLScriptElement[],

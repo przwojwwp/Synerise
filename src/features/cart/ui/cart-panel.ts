@@ -1,6 +1,6 @@
-import { calcTotal, getCart, removeItem } from "./cart";
-import { CART_LS_KEY } from "../types/Cart";
-import { asNumber, fmt, fromCents, toCents } from "../helpers/money";
+import { asNumber, fmt, fromCents, toCents } from "@/lib/money";
+import { calcTotal, getCart, removeItem } from "@/features/cart/cart";
+import { CART_LS_KEY } from "@/types/Cart";
 
 const PANEL_ID = "mini-cart-panel";
 const PANEL_SHADOW_HOST_ID = "mini-cart-panel-host";
@@ -71,10 +71,9 @@ const styleTag = (): HTMLStyleElement => {
   return style;
 };
 
-/** --- render ------------------------------------------------------------ */
 const render = (shadowRoot: ShadowRoot) => {
-  const state = getCart(); // stan koszyka
-  const total = calcTotal(state); // liczony w groszach po stronie cart.ts
+  const state = getCart();
+  const total = calcTotal(state);
 
   const wrapper = document.createElement("div");
   wrapper.className = "panel";

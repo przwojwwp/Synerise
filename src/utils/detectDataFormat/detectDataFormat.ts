@@ -1,6 +1,6 @@
-import type { DataFormat } from "../../types/DataFormat";
-import { allScripts } from "../../helpers/scripts";
+import type { DataFormat } from "@/types/DataFormat";
 import { detectFromScripts } from "./detectFromScript";
+import { allScripts } from "@/lib/web/scripts";
 
 export const detectDataFormat = (fullScan = false): DataFormat => {
   return detectFromScripts(allScripts(), { fullScan });

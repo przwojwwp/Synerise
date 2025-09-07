@@ -1,16 +1,11 @@
-import { allScripts, scriptText, scriptType } from "../../helpers/scripts";
-import { safeParseJsonOrFirstObject } from "../../helpers/json";
-import { isLdType, looksLikeLD } from "../../helpers/mime";
-import {
-  ldIsProduct,
-  ldPickImage,
-  ldPickName,
-  ldPickPrice,
-  ldPickUrl,
-} from "../../helpers/json-pick";
-import { getCanonicalUrl } from "../../helpers/url";
-import type { ProductInfo } from "../../types/ProductInfo";
-import type { ExtractOptions } from "../../types/ExtractOptions";
+import { safeParseJsonOrFirstObject } from "@/lib/json/json-parse";
+import { ldIsProduct, ldPickImage, ldPickName, ldPickPrice, ldPickUrl } from "@/lib/json/json-pick";
+import { isLdType, looksLikeLD } from "@/lib/web/mime";
+import { allScripts, scriptText, scriptType } from "@/lib/web/scripts";
+import { getCanonicalUrl } from "@/lib/web/url";
+import type { ExtractOptions } from "@/types/ExtractOptions";
+import type { ProductInfo } from "@/types/ProductInfo";
+
 
 export const extractInfoFromLDJSON = (
   opts: ExtractOptions = {}

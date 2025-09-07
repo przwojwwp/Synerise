@@ -1,13 +1,14 @@
 import { defineConfig } from "vite";
 import monkey from "vite-plugin-monkey";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(new URL(import.meta.url)));
 
 export default defineConfig({
   resolve: {
     alias: {
-      "@core": path.resolve(__dirname, "src/core"),
-      "@ui": path.resolve(__dirname, "src/ui"),
-      "@shared": path.resolve(__dirname, "src/shared"),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   plugins: [
@@ -20,6 +21,7 @@ export default defineConfig({
         match: ["*://*/*"],
         "run-at": "document-idle",
         "inject-into": "page",
+        noframes: true,
         grant: [],
       },
       build: {

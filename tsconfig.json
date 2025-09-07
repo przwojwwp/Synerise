@@ -17,9 +17,7 @@
 
     "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@ui/*": ["src/ui/*"],
-      "@shared/*": ["src/shared/*"]
+      "@/*": ["./src/*"]
     },
 
     "noUnusedLocals": true,
@@ -28,6 +26,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "vite-env.d.ts"],
+  "include": ["src", "vite-env.d.ts", "vite.config.ts"],
   "exclude": ["dist"]
 }

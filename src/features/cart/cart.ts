@@ -1,14 +1,10 @@
-import { readLS, writeLS } from "../helpers/ls";
-import { fromCents, toCents } from "../helpers/money";
-import { getProductId } from "../helpers/product-id";
-import { isCompleteProduct } from "../helpers/product-validate";
-import {
-  CART_LS_KEY,
-  CART_VERSION,
-  type CartItem,
-  type CartState,
-} from "../types/Cart";
-import type { ProductInfo } from "../types/ProductInfo";
+import { fromCents, toCents } from "@/lib/money";
+import { getProductId } from "@/lib/product/product-id";
+import { isCompleteProduct } from "@/lib/product/product-validate";
+import { readLS, writeLS } from "@/lib/storage/ls";
+import { CART_LS_KEY, CART_VERSION, type CartItem, type CartState } from "@/types/Cart";
+import type { ProductInfo } from "@/types/ProductInfo";
+
 
 const OLD_CART_LS_KEY = "cart";
 const nowIso = () => new Date().toISOString();
@@ -97,12 +93,12 @@ export const removeItem = (id: string): boolean => {
 
 export const calcTotal = (state = loadCart()): number => {
   const cents = state.items.reduce((sum, it) => {
-    const unit = (typeof it.price === "number" && Number.isFinite(it.price)) ? it.price : 0;
+    const unit =
+      typeof it.price === "number" && Number.isFinite(it.price) ? it.price : 0;
     return sum + toCents(unit) * it.quantity;
   }, 0);
   return fromCents(cents);
 };
-
 
 export const getCart = (): CartState => {
   return loadCart();

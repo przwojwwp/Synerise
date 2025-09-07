@@ -1,14 +1,10 @@
-import type { ExtractOptions } from "../types/ExtractOptions";
-import { detectDataFormat } from "../utils/detectDataFormat/detectDataFormat";
+import type { ExtractOptions } from "@/types/ExtractOptions";
+import type { ProductInfo } from "@/types/ProductInfo";
+import { detectDataFormat } from "@/utils/detectDataFormat/detectDataFormat";
 import { extractInfoFromLDJSON } from "./extractors/ldjson";
 import { extractInfoFromAppJSON } from "./extractors/appjson";
-import {
-  domFallbackImage,
-  domFallbackName,
-  domFallbackPrice,
-} from "../helpers/dom-fallback";
-import { getCanonicalUrl } from "../helpers/url";
-import type { ProductInfo } from "../types/ProductInfo";
+import { domFallbackImage, domFallbackName, domFallbackPrice } from "@/lib/dom/dom-fallback";
+import { getCanonicalUrl } from "@/lib/web/url";
 
 export const getProductInfo = (options: ExtractOptions = {}): ProductInfo => {
   const { fullScan = true, maxScripts, maxChars } = options;

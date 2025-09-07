@@ -1,4 +1,4 @@
-import type { ProductInfo } from "../types/ProductInfo";
+import type { ProductInfo } from "@/types/ProductInfo";
 
 const djb2 = (str: string): string => {
   let hash = 5381;

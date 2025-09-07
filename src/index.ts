@@ -1,9 +1,9 @@
-import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
-import type { ProductInfo } from "./types/ProductInfo";
-import { getProductInfo } from "./cart/getProductInfo";
-import { upsertProduct, getCart } from "./cart/cart";
-import { initCartPanel } from "./cart/cart-panel";
+import { getCart, upsertProduct } from "./features/cart/cart";
+import { getProductInfo } from "./features/cart/getProductInfo";
+import { initCartPanel } from "./features/cart/ui/cart-panel";
 import { CART_LS_KEY } from "./types/Cart";
+import type { ProductInfo } from "./types/ProductInfo";
+import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 
 declare global {
   interface Window {

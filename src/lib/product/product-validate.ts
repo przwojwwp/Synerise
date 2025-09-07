@@ -1,5 +1,5 @@
-import type { ProductInfo } from "../types/ProductInfo";
-import { toAbsUrl } from "./url";
+import type { ProductInfo } from "@/types/ProductInfo";
+import { toAbsUrl } from "../web/url";
 
 export const isCompleteProduct = (
   p: ProductInfo

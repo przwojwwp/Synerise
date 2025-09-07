@@ -1,19 +1,11 @@
-import { allScripts, scriptText, scriptType } from "../../helpers/scripts";
-import { safeParseJsonOrFirstObject } from "../../helpers/json";
-import {
-  isAnyJsonButLd,
-  looksLikeJsonPayload,
-  looksLikeLD,
-} from "../../helpers/mime";
-import {
-  appPickImage,
-  appPickName,
-  appPickPrice,
-  appPickUrl,
-} from "../../helpers/json-pick";
-import { getCanonicalUrl } from "../../helpers/url";
-import type { ProductInfo } from "../../types/ProductInfo";
-import type { ExtractOptions } from "../../types/ExtractOptions";
+import { safeParseJsonOrFirstObject } from "@/lib/json/json-parse";
+import { appPickImage, appPickName, appPickPrice, appPickUrl } from "@/lib/json/json-pick";
+import { isAnyJsonButLd, looksLikeJsonPayload, looksLikeLD } from "@/lib/web/mime";
+import { allScripts, scriptText, scriptType } from "@/lib/web/scripts";
+import { getCanonicalUrl } from "@/lib/web/url";
+import type { ExtractOptions } from "@/types/ExtractOptions";
+import type { ProductInfo } from "@/types/ProductInfo";
+
 
 export const extractInfoFromAppJSON = (
   opts: ExtractOptions = {}

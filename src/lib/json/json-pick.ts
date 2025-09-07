@@ -1,5 +1,5 @@
-import { toAbsUrl } from "./url";
-import { normalizePrice } from "./dom-fallback";
+import { toAbsUrl } from "@/lib/web/url";
+import { normalizePrice } from "@/lib/dom/dom-fallback";
 
 export const pickString = (v: any): string | null => {
   if (!v) return null;

@@ -1,4 +1,4 @@
-import { toAbsUrl } from "./url";
+import { toAbsUrl } from "../web/url";
 
 const getMeta = (sel: string) =>
   document.querySelector<HTMLMetaElement>(sel)?.content?.trim() || null;
