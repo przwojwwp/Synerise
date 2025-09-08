@@ -1,8 +1,7 @@
-import { getCart, upsertProduct } from "./features/cart/cart";
+import { upsertProduct, getCart } from "./features/cart/cart";
 import { getProductInfo } from "./features/cart/getProductInfo";
 import { initCartPanel } from "./features/cart/ui/cart-panel";
 import type { ProductInfo } from "./types/ProductInfo";
-import { detectDataFormat } from "./utils/detectDataFormat/detectDataFormat";
 
 declare global {
   interface Window {
@@ -13,9 +12,6 @@ declare global {
         maxScripts?: number;
         maxChars?: number;
       }) => ProductInfo;
-      detectDataFormat: (
-        fullScan?: boolean
-      ) => "ld+json" | "json" | "both" | "none";
       addToCart: (qty?: number) => import("./types/Cart").CartItem | null;
       getCart: () => import("./types/Cart").CartState;
       initCartPanel: () => void;
@@ -30,7 +26,6 @@ declare global {
 
   (window as any).MiniCart = {
     getProductInfo,
-    detectDataFormat,
     getCart,
     addToCart: (qty = 1) => {
       const p = getProductInfo({ fullScan: true });
@@ -42,30 +37,76 @@ declare global {
   const isComplete = (p: ProductInfo) =>
     !!(p.name && p.imageUrl && p.productUrl && p.price !== null);
 
-  // pierwsze podejście — spróbuj od razu zapisać produkt
-  let info = getProductInfo({ fullScan: true });
-  upsertProduct(info, 1);
-
-  // jeśli strona jeszcze „dochodzi”, spróbuj uzupełnić brakujące dane
-  if (!isComplete(info)) {
-    const MAX_ATTEMPTS = 3;
-    const DELAY_MS = 700;
-    let attempt = 0;
-
-    const retry = () => {
-      attempt += 1;
-      const again = getProductInfo({ fullScan: true });
-      if (isComplete(again)) {
-        upsertProduct(again, 1);
-        return;
-      }
-      if (attempt < MAX_ATTEMPTS) {
-        setTimeout(retry, DELAY_MS);
-      }
+  const debounce = <T extends (...args: any[]) => void>(fn: T, ms = 200) => {
+    let t: number | undefined;
+    return (...args: Parameters<T>) => {
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(() => fn(...args), ms);
     };
+  };
 
-    setTimeout(retry, DELAY_MS);
-  }
+  let lastProcessedUrl: string | null = null;
 
+  const scanAndAddOncePerUrl = () => {
+    const info = getProductInfo({ fullScan: true });
+    const url = info.productUrl || window.location.href;
+
+    if (lastProcessedUrl === url) return;
+
+    const saved = upsertProduct(info, 1);
+    if (saved) {
+      lastProcessedUrl = url;
+      return;
+    }
+
+    if (!isComplete(info)) {
+      const MAX_ATTEMPTS = 3;
+      const DELAY_MS = 700;
+      let attempt = 0;
+
+      const retry = () => {
+        attempt += 1;
+        const again = getProductInfo({ fullScan: true });
+        const saved2 = isComplete(again) ? upsertProduct(again, 1) : null;
+        if (saved2) {
+          lastProcessedUrl = again.productUrl || window.location.href;
+          return;
+        }
+        if (attempt < MAX_ATTEMPTS) {
+          setTimeout(retry, DELAY_MS);
+        }
+      };
+
+      setTimeout(retry, DELAY_MS);
+    }
+  };
+
+  const debouncedScan = debounce(scanAndAddOncePerUrl, 200);
+
+  const emitRouteEvent = () =>
+    window.dispatchEvent(new Event("minicart:route"));
+
+  ["pushState", "replaceState"].forEach((m) => {
+    const orig = (history as any)[m];
+    (history as any)[m] = function (...args: any[]) {
+      const ret = orig.apply(this, args);
+      emitRouteEvent();
+      return ret;
+    };
+  });
+
+  window.addEventListener("popstate", emitRouteEvent);
+  window.addEventListener("hashchange", emitRouteEvent);
+  window.addEventListener("minicart:route", () => {
+    lastProcessedUrl = null;
+    debouncedScan();
+  });
+
+  const mo = new MutationObserver(() => {
+    debouncedScan();
+  });
+  mo.observe(document.documentElement, { subtree: true, childList: true });
+
+  scanAndAddOncePerUrl();
   initCartPanel();
 })();

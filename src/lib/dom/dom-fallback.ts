@@ -21,6 +21,9 @@ export const normalizePrice = (raw?: string | null): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+const isPositive = (n: number | null): n is number =>
+  typeof n === "number" && Number.isFinite(n) && n > 0;
+
 export const domFallbackImage = (): string | null => {
   const og = getMeta('meta[property="og:image"]');
   const tw =
@@ -44,7 +47,7 @@ export const domFallbackPrice = (): number | null => {
       null;
 
     const n = normalizePrice(amount);
-    if (n !== null) return n;
+    if (isPositive(n)) return n;
   }
 
   {
@@ -69,16 +72,19 @@ export const domFallbackPrice = (): number | null => {
         if (!value) continue;
         if (/price|amount/i.test(name)) {
           const direct = normalizePrice(value);
-          if (direct !== null) return direct;
-          if (/^\d+$/.test(value) && +value > 1000) return +value / 100;
+          if (isPositive(direct)) return direct;
+          if (/^\d+$/.test(value) && +value > 1000) {
+            const cents = +value / 100;
+            if (isPositive(cents)) return cents;
+          }
         }
       }
       const n1 = normalizePrice(el.textContent?.trim() || "");
-      if (n1 !== null) return n1;
+      if (isPositive(n1)) return n1;
 
       for (const child of Array.from(el.children)) {
         const n2 = normalizePrice(child.textContent?.trim() || "");
-        if (n2 !== null) return n2;
+        if (isPositive(n2)) return n2;
       }
     }
   }
@@ -88,14 +94,17 @@ export const domFallbackPrice = (): number | null => {
     const nodes = document.querySelectorAll<HTMLElement>(
       "span,div,dd,dt,p,b,strong,em"
     );
+
     let checked = 0;
     for (const el of nodes) {
       if (checked++ > 2000) break;
       const txt = el.textContent?.trim() || "";
       if (!txt || !CURRENCY.test(txt)) continue;
+
       if (/\/\s?(mies|msc|month|mo)\b/i.test(txt)) continue;
+
       const n = normalizePrice(txt);
-      if (n !== null) return n;
+      if (isPositive(n)) return n;
     }
   }
 
